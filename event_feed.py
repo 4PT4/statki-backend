@@ -2,10 +2,6 @@ from fastapi import WebSocket, WebSocketDisconnect
 import schemas
 
 
-class UnknownHandler(Exception):
-    pass
-
-
 class EventFeed:
     def __init__(self) -> None:
         self.handlers = [self.ready, self.fire]
