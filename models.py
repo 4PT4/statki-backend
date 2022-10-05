@@ -1,4 +1,5 @@
 from datetime import datetime
+from tokenize import _Position
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -10,7 +11,7 @@ class Player(Base):
     __tablename__ = "player"
 
     id = Column(Integer, primary_key=True, index=True)
-    nickname = Column(String)
+    nickname = Column(String(20))
     wins = Column(Integer)
     loses = Column(Integer)
     warships = Column(list)
