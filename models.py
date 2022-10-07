@@ -19,23 +19,20 @@ class Player(Base):
 
    # owner = relationship("User", back_populates="items")
 
+class Orientation(enum.Enum):
+    horizontal = 1
+    vertical = 2
+    
+
 class Warship(Base):
     __tablename__="warship"
-    id = Column(Integer, primary_key=True, index=True )
+    id = Column(Integer, primary_key=True, index=True)
+    player_id = Column(Integer)
     position = Column(_Position)
     length = Column(Integer)
-    orientation = Column(Orientation)
-
-class Position(Base):
-    __tablename__="position"
-    id = Column(Integer, primary_key=True, index=True )
     x = Column(Integer)
     y = Column(Integer)
+    orientation = Column(Enum(Orientation)))
 
-class Orientation(Base):
-    __tablename__="orientation"
-    id = Column(Integer, primary_key=True, index=True )
-    vertical = Column(Integer)
-    horizontal = Column(Integer)
 
 
