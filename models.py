@@ -1,6 +1,6 @@
 from datetime import datetime
 from tokenize import _Position
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, enum
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -32,7 +32,9 @@ class Warship(Base):
     length = Column(Integer)
     x = Column(Integer)
     y = Column(Integer)
-    orientation = Column(Enum(Orientation)))
+    orientation = Column(enum(Orientation))
+
+
 
 
 
