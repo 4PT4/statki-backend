@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel
 from typing import Union
 
@@ -19,12 +20,12 @@ class PlayerBase(BaseModel):
         orm_mode = True
 
 class WarshipBase(BaseModel):
-    warship_id: int
+    id: int
     player_id: int
     length:  int
-    x: int
-    y: int
-    orientation: int
+    x: Enum
+    y: Enum
+    orientation: Enum
     class Config:
         orm_mode = True
  

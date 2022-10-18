@@ -1,13 +1,10 @@
-from this import d
 from fastapi import FastAPI
 from event_feed import EventFeed
 # imports for database
-from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
-import models, schemas
-from database import SessionLocal, engine
+from fastapi import Depends, FastAPI
+from database import engine
 from models import * 
-from sqlalchemy import insert
+import models
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -33,21 +30,22 @@ app.add_api_websocket_route('/', event_feed)
 
 
 # connecting files associated with database
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db6
-    finally:
-        db.close()
+
+
+
+#Creates database
+Base.metadata.create_all(engine)
 
 #Insert Data to DB
 
 Player_insert1 = models.Player(id = "1", nickname="player1", wins="2", loses="1", last_seen="2022/10/15")
 Player_insert2 = models.Player(id = "2", nickname="player2", wins="5", loses="2", last_seen="2022/10/15")
 
-Warship_Insert1 = models.Warship(warship_id="1", player_id="1", length="2", x="1",y="1", orientation="horizontal")
-Warship_Insert2 = models.Warship(warship_id="2", player_id="2", length="1", x="3",y="3", orientation="vertical")
-Warship_Insert3 = models.Warship(warship_id="3", player_id="2", length="3", x="4",y="4", orientation="horizontal")
+
+
+Warship_Insert1 = models.Warship(id="1", player_id="1", length="2", x="1",y="1", orientation="1")
+Warship_Insert2 = models.Warship(id="2", player_id="2", length="1", x="3",y="3", orientation="2")
+Warship_Insert3 = models.Warship(id="3", player_id="2", length="3", x="4",y="4", orientation="1")
 
 
                                                        
