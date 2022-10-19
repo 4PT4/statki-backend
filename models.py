@@ -1,8 +1,11 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Enum, Date
 from sqlalchemy.orm import relationship
 from database import Base
-import enum
+from entities import Orientation
 
+
+
+#create models
 class Player(Base):
     __tablename__ = "player"
     id = Column(Integer, primary_key=True, index=True)
@@ -14,10 +17,6 @@ class Player(Base):
     player_relation = relationship("Warship", back_populates="warship_relation")
 
 
-class Orientation(enum.Enum):
-    horizontal = 1
-    vertical = 2
-   
 
 class Warship(Base):
     __tablename__="warship"
