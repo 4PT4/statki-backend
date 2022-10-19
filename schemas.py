@@ -23,8 +23,8 @@ class WarshipBase(BaseModel):
     id: int
     player_id: int
     length:  int
-    x: Enum
-    y: Enum
+    x: int
+    y: int
     orientation: Enum
     class Config:
         orm_mode = True

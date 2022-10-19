@@ -44,9 +44,9 @@ Player_insert1 = models.Player(id = 1, nickname="player1", wins=2, loses=1)
 Player_insert2 = models.Player(id = 2, nickname="player2", wins=5, loses=2)
 
 
-Warship_Insert1 = models.Warship(id = 1, player_id=1, length=2, x=1,y=1, orientation=Orientation.horizontal)
-Warship_Insert2 = models.Warship(id = 2, player_id=2, length=1, x=3,y=3, orientation=Orientation.vertical)
-Warship_Insert3 = models.Warship(id = 3, player_id=6, length=3, x=4,y=4, orientation=Orientation.horizontal)
+Warship_Insert1 = models.Warship(id = 1, player_id=1, length=2, x=1,y=1, orientation=Orientation.HORIZONTAL)
+Warship_Insert2 = models.Warship(id = 2, player_id=2, length=1, x=3,y=3, orientation=Orientation.VERTICAL)
+Warship_Insert3 = models.Warship(id = 3, player_id=6, length=3, x=4,y=4, orientation=Orientation.HORIZONTAL)
 
 with next(get_db()) as db:
     db.add(Player_insert1)
