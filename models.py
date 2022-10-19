@@ -3,8 +3,6 @@ from sqlalchemy.orm import relationship
 from database import Base
 from entities import Orientation
 
-# create models
-
 
 class Player(Base):
     __tablename__ = "player"
@@ -14,8 +12,7 @@ class Player(Base):
     loses = Column(Integer)
     last_seen = Column(Date)
 
-    player_relation = relationship(
-        "Warship", back_populates="warship_relation")
+    player_relation = relationship("Warship", back_populates="warship_relation")
 
 
 class Warship(Base):
@@ -28,5 +25,3 @@ class Warship(Base):
     orientation = Column(Enum(Orientation))
 
     warship_relation = relationship("Player", back_populates="player_relation")
-
-    #orientation = Column(Boolean)
