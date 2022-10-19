@@ -3,9 +3,9 @@ from sqlalchemy.orm import relationship
 from database import Base
 from entities import Orientation
 
+# create models
 
 
-#create models
 class Player(Base):
     __tablename__ = "player"
     id = Column(Integer, primary_key=True, index=True)
@@ -14,12 +14,12 @@ class Player(Base):
     loses = Column(Integer)
     last_seen = Column(Date)
 
-    player_relation = relationship("Warship", back_populates="warship_relation")
-
+    player_relation = relationship(
+        "Warship", back_populates="warship_relation")
 
 
 class Warship(Base):
-    __tablename__="warship"
+    __tablename__ = "warship"
     id = Column(Integer, primary_key=True, index=True)
     player_id = Column(Integer, ForeignKey("player.id"))
     length = Column(Integer)
