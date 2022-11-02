@@ -14,7 +14,7 @@ class PlayerBase(BaseModel):
     nickname: Union[str, None] = None
     wins: int
     loses: int
-    last_seen: datetime
+    last_seen: int
 
     class Config:
         orm_mode = True
