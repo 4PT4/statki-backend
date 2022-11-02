@@ -10,7 +10,7 @@ class Player(Base):
     nickname = Column(String(20))
     wins = Column(Integer)
     loses = Column(Integer)
-    last_seen = Column(Date)
+    last_seen = Column(Integer)
 
     player_relation = relationship("Warship", back_populates="warship_relation")
 
