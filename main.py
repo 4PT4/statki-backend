@@ -17,14 +17,15 @@ app: FastAPI = FastAPI()
 # task #2 + #6
 
 
-@app.get("/players/", response_model=List[schemas.PlayerBase])
-def read_users(db: Session = Depends(get_db)):
-    users = get_users(db)
+@app.get("/players", response_model=List[schemas.PlayerBase])
+def read_users(seenAfter: int, db: Session = Depends(get_db)):
+    print(seenAfter)
+    users = get_users(seenAfter, db)
     return users
 
 
-def get_users(db: Session):
-    return db.query(models.Player).all()
+def get_users(seenAfter, db: Session):
+    return db.query(models.Player).filter(models.Player.last_seen >= seenAfter).all()
 
 # task #3
 # game_engine: GameEngine = GameEngine()
@@ -49,11 +50,11 @@ warship2 = Warship(id=2, player_id=2, length=1, x=3,
 warship3 = Warship(id=3, player_id=6, length=3, x=4, y=4,
                    orientation=Orientation.HORIZONTAL)
 
-with next(get_db()) as db:
-    db.add(player1)
-    db.add(player2)
-    db.add(warship1)
-    db.add(warship2)
+# with next(get_db()) as db:
+#     db.add(player1)
+#     db.add(player2)
+#     db.add(warship1)
+#     db.add(warship2)
 
-    db.add(warship3)
-    db.commit()
+#     db.add(warship3)
+#     db.commit()
