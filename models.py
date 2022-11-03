@@ -8,6 +8,7 @@ class Player(Base):
     __tablename__ = "player"
     id = Column(Integer, primary_key=True, index=True)
     nickname = Column(String(20))
+    password = Column(String(20))
     wins = Column(Integer)
     loses = Column(Integer)
     last_seen = Column(Integer)
