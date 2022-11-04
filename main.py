@@ -46,11 +46,10 @@ warship2 = Warship(id=2, player_id=2, length=1, x=3,
 warship3 = Warship(id=3, player_id=6, length=3, x=4, y=4,
                    orientation=Orientation.HORIZONTAL)
 
-# with next(get_db()) as db:
-#     db.add(player1)
-#     db.add(player2)
-#     db.add(warship1)
-#     db.add(warship2)
-
-#     db.add(warship3)
-#     db.commit()
+with next(get_db()) as db:
+    db.add(player1)
+    db.add(player2)
+    db.add(warship1)
+    db.add(warship2)
+    db.add(warship3)
+    db.commit()
