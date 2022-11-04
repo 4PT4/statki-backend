@@ -4,8 +4,7 @@ from database import engine, Base, get_db
 from models import Warship, Player
 from entities import Orientation
 from sqlalchemy.orm import Session
-import models, schemas
-from typing import List
+from schemas import PlayerBase
 import time
 import math
 
@@ -17,15 +16,10 @@ app: FastAPI = FastAPI()
 # task #2 + #6
 
 
-@app.get("/players", response_model=List[schemas.PlayerBase])
-def read_users(seenAfter: int, db: Session = Depends(get_db)):
-    print(seenAfter)
-    users = get_users(seenAfter, db)
-    return users
-
-
-def get_users(seenAfter, db: Session):
-    return db.query(models.Player).filter(models.Player.last_seen >= seenAfter).all()
+@app.get("/players", response_model=list[PlayerBase])
+def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
+    players = db.query(Player).filter(Player.last_seen >= seen_after).all()
+    return players
 
 # task #3
 # game_engine: GameEngine = GameEngine()
@@ -41,8 +35,10 @@ app.add_api_websocket_route('/', event_feed)
 # Insert Data to DB
 timestamp = time.time()
 timestamp = math.floor(timestamp)
-player1 = Player(id=1, nickname="player1", wins=2, loses=1, last_seen=timestamp)
-player2 = Player(id=2, nickname="player2", wins=5, loses=2, last_seen=timestamp)
+player1 = Player(id=1, nickname="player1", wins=2,
+                 loses=1, last_seen=timestamp)
+player2 = Player(id=2, nickname="player2", wins=5,
+                 loses=2, last_seen=timestamp)
 warship1 = Warship(id=1, player_id=1, length=2, x=1, y=1,
                    orientation=Orientation.HORIZONTAL)
 warship2 = Warship(id=2, player_id=2, length=1, x=3,
