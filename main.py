@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Depends
-from event_feed import EventFeed
+from fastapi import FastAPI, Depends, WebSocket
+import websocket
 from database import engine, Base, get_db
 from models import Warship, Player
 from entities import Orientation
@@ -13,23 +13,16 @@ Base.metadata.create_all(bind=engine)
 
 app: FastAPI = FastAPI()
 
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=".*",
-    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # register REST endpoints
-# task #2 + #6
-
+# task #8
 
 @app.get("/players", response_model=list[PlayerBase])
 def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
@@ -38,14 +31,24 @@ def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
 
 # task #3
 # game_engine: GameEngine = GameEngine()
-# event_feed: EventFeed = EventFeed(game_engine)
 
 
-# create WebSocket event feed
-event_feed: EventFeed = EventFeed()
+async def connect(ws: WebSocket, token: str):
+    print(token)
+
+
+async def disconnect(ws: WebSocket):
+    print(ws)
 
 # register WebSocket endpoint
-app.add_api_websocket_route('/', event_feed)
+app.add_api_websocket_route('/', websocket.register_events([
+    connect,
+    disconnect,
+    # ready
+    # shoot
+    # begin
+    # end
+]))
 
 # Insert Data to DB
 timestamp = time.time()
