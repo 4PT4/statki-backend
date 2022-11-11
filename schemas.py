@@ -1,7 +1,7 @@
-from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Union
+from humps import camelize
 
 
 class Message(BaseModel):
@@ -9,14 +9,25 @@ class Message(BaseModel):
     data: object
 
 
+class Token(BaseModel):
+    token: str
+
+
+class Credentials(BaseModel):
+    nickname: str
+    password: str
+
+
 class PlayerBase(BaseModel):
-    id: int
+    id: str
     nickname: Union[str, None] = None
     wins: int
     loses: int
-    last_seen: int
+    last_seen: int = Field(alias="lastSeen")
 
     class Config:
+        allow_population_by_field_name = True
+        alias_generator = camelize
         orm_mode = True
 
 

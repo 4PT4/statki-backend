@@ -1,13 +1,11 @@
-from fastapi import FastAPI, Depends, WebSocket
+from fastapi import Depends, FastAPI, HTTPException, status
 import websocket
 from database import engine, Base, get_db
-from models import Warship, Player
-from entities import Orientation
+from models import Player
 from sqlalchemy.orm import Session
-from schemas import PlayerBase
-import time
-import math
+from schemas import PlayerBase, Credentials, Token
 from fastapi.middleware.cors import CORSMiddleware
+from auth import get_password_hash, verify_password, create_token
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,53 +19,54 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# register REST endpoints
-# task #8
 
 @app.get("/players", response_model=list[PlayerBase])
 def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
-    players = db.query(Player).filter(Player.last_seen >= seen_after).all()
+    query = db.query(Player)
+    query = query.filter(Player.last_seen >= seen_after)
+    query = query.order_by(Player.wins.desc())
+    players = query.all()
+
     return players
 
-# task #3
-# game_engine: GameEngine = GameEngine()
+
+def create_player(db: Session, credentials: Credentials):
+    player = Player(
+        nickname=credentials.nickname,
+        password=get_password_hash(credentials.password)
+    )
+    db.add(player)
+    db.commit()
+    db.refresh(player)
+
+    return player.id
 
 
-async def connect(ws: WebSocket, token: str):
-    print(token)
+@app.post("/auth/login", response_model=Token)
+def login(credentials: Credentials, db: Session = Depends(get_db)):
+    query = db.query(Player)
+    query = query.filter(Player.nickname == credentials.nickname)
+    player: Player = query.first()
 
+    player_id = None
 
-async def disconnect(ws: WebSocket):
-    print(ws)
+    if player:
+        if verify_password(credentials.password, player.password):
+            player_id = player.id
+        else:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    else:
+        player_id = create_player(db, credentials)
+
+    return Token(token=create_token(player_id))
+
 
 # register WebSocket endpoint
 app.add_api_websocket_route('/', websocket.register_events([
-    connect,
-    disconnect,
+    # connect,
+    # disconnect,
     # ready
     # shoot
     # begin
     # end
 ]))
-
-# Insert Data to DB
-timestamp = time.time()
-timestamp = math.floor(timestamp)
-player1 = Player(id=1, nickname="player1", wins=2,
-                 loses=1, last_seen=timestamp)
-player2 = Player(id=2, nickname="player2", wins=5,
-                 loses=2, last_seen=timestamp)
-warship1 = Warship(id=1, player_id=1, length=2, x=1, y=1,
-                   orientation=Orientation.HORIZONTAL)
-warship2 = Warship(id=2, player_id=2, length=1, x=3,
-                   y=3, orientation=Orientation.VERTICAL)
-warship3 = Warship(id=3, player_id=6, length=3, x=4, y=4,
-                   orientation=Orientation.HORIZONTAL)
-
-with next(get_db()) as db:
-    db.add(player1)
-    db.add(player2)
-    db.add(warship1)
-    db.add(warship2)
-    db.add(warship3)
-    db.commit()
