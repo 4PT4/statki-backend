@@ -1,8 +1,8 @@
 from fastapi import WebSocket, WebSocketDisconnect, Depends
-from models import Player
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas import Message
+from entities import NetworkPlayer
 
 handlers = {}
 
@@ -20,8 +20,9 @@ def create_caller(db: Session, context: WebSocket):
         handler = handlers.get(event)
         player = context.state.player
         callback = create_callback(context)
+        network_player = NetworkPlayer(player, callback)
         if handler:
-            return await handler(callback, db, player, data)
+            return await handler(db, network_player, data)
         else:
             print(f"Calling \"{event}\" handler failed.")
 

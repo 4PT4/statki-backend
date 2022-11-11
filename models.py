@@ -1,8 +1,13 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Enum, Date, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, String, Enum
 from sqlalchemy.orm import relationship
 from database import Base
-from entities import Orientation
 from utils import get_current_timestamp, get_uuid
+import enum
+
+
+class Orientation(enum.Enum):
+    HORIZONTAL = 1
+    VERTICAL = 2
 
 
 class Player(Base):

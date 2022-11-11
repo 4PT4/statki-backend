@@ -8,7 +8,7 @@ from schemas import PlayerBase, Credentials, Token
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import get_password_hash, verify_password, create_token, WebSocketAuthBackend
-
+from entities import NetworkPlayer
 
 Base.metadata.create_all(bind=engine)
 
@@ -56,7 +56,10 @@ def login(credentials: Credentials, db: Session = Depends(get_db)):
         if verify_password(credentials.password, player.password):
             player_id = player.id
         else:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect password."
+            )
     else:
         player_id = create_player(db, credentials)
 
@@ -73,11 +76,11 @@ app_websocket: FastAPI = FastAPI(
     middleware=websocket_middleware)
 
 
-async def connect(callback, db: Session, current_player: Player, data):
-    await callback("greeting", "hi")
+async def connect(db: Session, player: NetworkPlayer, data):
+    await player.callback("greeting", "hi")
 
 
-async def disconnect(callback, db: Session, current_player: Player, data):
+async def disconnect(db: Session, player: NetworkPlayer, data):
     pass
 
 
