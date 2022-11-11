@@ -1,10 +1,12 @@
 from database import get_db
 from sqlalchemy.orm import Session
-from fastapi import status, HTTPException, Depends
 from models import Player
 from passlib.context import CryptContext
 import jwt
 from datetime import timezone, datetime
+from starlette.authentication import (
+    AuthCredentials, AuthenticationBackend, AuthenticationError, SimpleUser
+)
 
 SECRET_KEY = "f170e0d954edfcfb3e63759e934fd220580ab333b58c6d14f3762a02423c198f"
 ALGORITHM = "HS256"
@@ -45,14 +47,24 @@ def decode_token(token: str):
     return id
 
 
-async def get_current_player(token: str | None = None, db: Session = Depends(get_db)):
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-
-    player_id = decode_token(token)
-    player = get_player(db, player_id)
-
-    if not player:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+async def get_current_player(db: Session, token: str) -> Player:
+    player_id: str = decode_token(token)
+    player: Player = get_player(db, player_id)
 
     return player
+
+
+class WebSocketAuthBackend(AuthenticationBackend):
+    async def authenticate(self, conn):
+        token = conn.query_params.get("token")
+
+        if not token:
+            raise AuthenticationError("No token provided.")
+        
+        with next(get_db()) as db:
+            player = await get_current_player(db, token)
+            conn.state.player = player
+            if not player:
+                raise AuthenticationError("Invalid token.")
+
+        return AuthCredentials(), SimpleUser(player.nickname)

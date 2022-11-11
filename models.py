@@ -4,6 +4,7 @@ from database import Base
 from entities import Orientation
 from utils import get_current_timestamp, get_uuid
 
+
 class Player(Base):
     __tablename__ = "player"
     id = Column(String(36), primary_key=True, index=True, default=get_uuid)
@@ -11,9 +12,11 @@ class Player(Base):
     password = Column(String(255))
     wins = Column(Integer, default=0)
     loses = Column(Integer, default=0)
+    win_streak = Column(Integer, default=0)
     last_seen = Column(Integer, default=get_current_timestamp)
 
-    player_relation = relationship("Warship", back_populates="warship_relation")
+    player_relation = relationship(
+        "Warship", back_populates="warship_relation")
 
 
 class Warship(Base):

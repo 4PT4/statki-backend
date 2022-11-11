@@ -1,23 +1,25 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 import websocket
+from fastapi.middleware import Middleware
 from database import engine, Base, get_db
 from models import Player
 from sqlalchemy.orm import Session
 from schemas import PlayerBase, Credentials, Token
 from fastapi.middleware.cors import CORSMiddleware
-from auth import get_password_hash, verify_password, create_token
+from starlette.middleware.authentication import AuthenticationMiddleware
+from auth import get_password_hash, verify_password, create_token, WebSocketAuthBackend
+
 
 Base.metadata.create_all(bind=engine)
 
-app: FastAPI = FastAPI()
+middleware = [
+    Middleware(CORSMiddleware,
+               allow_origins=["*"],
+               allow_methods=["*"],
+               allow_headers=["*"])
+]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex=".*",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app: FastAPI = FastAPI(middleware=middleware)
 
 
 @app.get("/players", response_model=list[PlayerBase])
@@ -61,12 +63,30 @@ def login(credentials: Credentials, db: Session = Depends(get_db)):
     return Token(token=create_token(player_id))
 
 
-# register WebSocket endpoint
-app.add_api_websocket_route('/', websocket.register_events([
-    # connect,
-    # disconnect,
+websocket_middleware = [
+    *middleware,
+    Middleware(AuthenticationMiddleware,
+               backend=WebSocketAuthBackend())
+]
+
+app_websocket: FastAPI = FastAPI(
+    middleware=websocket_middleware)
+
+
+async def connect(callback, db: Session, current_player: Player, data):
+    await callback("greeting", "hi")
+
+
+async def disconnect(callback, db: Session, current_player: Player, data):
+    pass
+
+
+app_websocket.add_api_websocket_route('/', websocket.register_events([
+    connect,
+    disconnect,
     # ready
     # shoot
-    # begin
-    # end
 ]))
+
+
+app.mount("/", app_websocket)

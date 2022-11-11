@@ -1,32 +1,44 @@
 from fastapi import WebSocket, WebSocketDisconnect, Depends
 from models import Player
-from auth import get_current_player
-
-
-async def try_call_handler(name: str, context: WebSocket, current_player: Player):
-    handler = handlers.get(name)
-    if handler:
-        return await handler(current_player)
-
-
-async def websocket_route(context: WebSocket, current_player: Player = Depends(get_current_player)):
-    print(context)
-    
-    print(current_player.nickname)
-    await context.accept()
-    # await try_call_handler('connect', current_player)
-    try:
-        while True:
-            pass
-            # payload = await context.receive_json()
-            # message = Message(**payload)
-            # await try_call_handler(message.event)
-    except WebSocketDisconnect:
-        await try_call_handler('disconnect', context, current_player)
-        # await context.close()
-
+from sqlalchemy.orm import Session
+from database import get_db
+from schemas import Message
 
 handlers = {}
+
+
+def create_callback(context: WebSocket):
+    async def callback(event, data):
+        message = Message(event=event, data=data)
+        await context.send_json(message.json())
+
+    return callback
+
+
+def create_caller(db: Session, context: WebSocket):
+    async def caller(event: str, data=None):
+        handler = handlers.get(event)
+        player = context.state.player
+        callback = create_callback(context)
+        if handler:
+            return await handler(callback, db, player, data)
+        else:
+            print(f"Calling \"{event}\" handler failed.")
+
+    return caller
+
+
+async def websocket_route(context: WebSocket, db: Session = Depends(get_db)):
+    await context.accept()
+    caller = create_caller(db, context)
+    await caller('connect')
+    try:
+        while True:
+            payload = await context.receive_json()
+            message = Message(**payload)
+            await caller(message.event, message.data)
+    except WebSocketDisconnect:
+        await caller('disconnect')
 
 
 def register_events(callbacks):
