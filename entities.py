@@ -1,7 +1,12 @@
-from models import Player
+from schemas import PlayerInternal
 
 
-class NetworkPlayer:
-    def __init__(self, data: Player, callback) -> None:
-        self.data = data
+class PlayerConnection:
+    """
+    Player data structure for websocket connections,
+    holds associated data and connection itself.
+    """
+
+    def __init__(self, player: PlayerInternal, callback) -> None:
+        self.player: PlayerInternal = player
         self.callback = callback

@@ -2,13 +2,19 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas import Message
-from entities import NetworkPlayer
+from entities import PlayerConnection
 
 handlers = {}
 
 
 def create_callback(context: WebSocket):
-    async def callback(event, data):
+    """
+    Creates callback for websocket message handler.
+    """
+    async def callback(event: str, data: object) -> None:
+        """
+        Callback function, sends tansformed data back.
+        """
         message = Message(event=event, data=data)
         await context.send_json(message.json())
 
@@ -16,15 +22,23 @@ def create_callback(context: WebSocket):
 
 
 def create_caller(db: Session, context: WebSocket):
+    """
+    Creates message caller for websocket route.
+    """
+    callback = create_callback(context)
+    
     async def caller(event: str, data=None):
+        """
+        Caller function, allows of easy websocket event handling.
+        Invokes specific handler passing database session, player
+        connection and data object.
+        """
         handler = handlers.get(event)
         player = context.state.player
-        callback = create_callback(context)
-        network_player = NetworkPlayer(player, callback)
         if handler:
-            return await handler(db, network_player, data)
+            return await handler(db, PlayerConnection(player, callback), data)
         else:
-            print(f"Calling \"{event}\" handler failed.")
+            print(f"[Warning] Calling \"{event}\" handler failed.")
 
     return caller
 
@@ -43,6 +57,9 @@ async def websocket_route(context: WebSocket, db: Session = Depends(get_db)):
 
 
 def register_events(callbacks):
+    """
+    Registers supported events.
+    """
     for callback in callbacks:
         handlers[callback.__name__] = callback
 

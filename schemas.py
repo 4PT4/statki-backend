@@ -1,6 +1,5 @@
 from enum import Enum
 from pydantic import BaseModel, Field
-from typing import Union
 from humps import camelize
 
 
@@ -33,8 +32,8 @@ class PlayerBase(BaseModel):
 
 
 class WarshipBase(BaseModel):
-    id: int
-    player_id: int
+    id: str
+    player_id: str
     length:  int
     x: int
     y: int
@@ -42,3 +41,7 @@ class WarshipBase(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class PlayerInternal(PlayerBase):
+    warships: list[WarshipBase]

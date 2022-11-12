@@ -8,7 +8,7 @@ from schemas import PlayerBase, Credentials, Token
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import get_password_hash, verify_password, create_token, WebSocketAuthBackend
-from entities import NetworkPlayer
+from entities import PlayerConnection
 
 Base.metadata.create_all(bind=engine)
 
@@ -33,6 +33,9 @@ def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
 
 
 def create_player(db: Session, credentials: Credentials):
+    """
+    Creates new player.
+    """
     player = Player(
         nickname=credentials.nickname,
         password=get_password_hash(credentials.password)
@@ -62,6 +65,7 @@ def login(credentials: Credentials, db: Session = Depends(get_db)):
             )
     else:
         player_id = create_player(db, credentials)
+        # TODO: Populate warships from predefined set.
 
     return Token(token=create_token(player_id))
 
@@ -76,19 +80,19 @@ app_websocket: FastAPI = FastAPI(
     middleware=websocket_middleware)
 
 
-async def connect(db: Session, player: NetworkPlayer, data):
-    await player.callback("greeting", "hi")
+async def connect(db: Session, conn: PlayerConnection, data):
+    await conn.callback("greeting", "hi")
 
 
-async def disconnect(db: Session, player: NetworkPlayer, data):
+async def disconnect(db: Session, conn: PlayerConnection, data):
     pass
 
 
 app_websocket.add_api_websocket_route('/', websocket.register_events([
     connect,
     disconnect,
-    # ready
-    # shoot
+    # TODO: ready
+    # TODO: shoot
 ]))
 
 
