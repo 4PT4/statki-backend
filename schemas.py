@@ -1,7 +1,6 @@
-from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel
-from typing import Union
+from pydantic import BaseModel, Field
+from humps import camelize
 
 
 class Message(BaseModel):
@@ -9,20 +8,32 @@ class Message(BaseModel):
     data: object
 
 
+class Token(BaseModel):
+    token: str
+
+
+class Credentials(BaseModel):
+    nickname: str
+    password: str
+
+
 class PlayerBase(BaseModel):
-    id: int
-    nickname: Union[str, None] = None
+    id: str
+    nickname: str
     wins: int
     loses: int
-    last_seen: int
+    win_streak: int = Field(alias="winStreak")
+    last_seen: int = Field(alias="lastSeen")
 
     class Config:
+        allow_population_by_field_name = True
+        alias_generator = camelize
         orm_mode = True
 
 
 class WarshipBase(BaseModel):
-    id: int
-    player_id: int
+    id: str
+    player_id: str
     length:  int
     x: int
     y: int
@@ -30,3 +41,7 @@ class WarshipBase(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class PlayerInternal(PlayerBase):
+    warships: list[WarshipBase]

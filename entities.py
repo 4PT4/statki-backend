@@ -1,6 +1,12 @@
-import enum
+from schemas import PlayerInternal
 
 
-class Orientation(enum.Enum):
-    HORIZONTAL = 1
-    VERTICAL = 2
+class PlayerConnection:
+    """
+    Player data structure for websocket connections,
+    holds associated data and connection itself.
+    """
+
+    def __init__(self, player: PlayerInternal, callback) -> None:
+        self.player: PlayerInternal = player
+        self.callback = callback

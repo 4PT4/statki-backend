@@ -1,27 +1,65 @@
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket, WebSocketDisconnect, Depends
+from sqlalchemy.orm import Session
+from database import get_db
 from schemas import Message
+from entities import PlayerConnection
 
 handlers = {}
 
 
-async def websocket_route(context: WebSocket, token: str):
+def create_callback(context: WebSocket):
+    """
+    Creates callback for websocket message handler.
+    """
+    async def callback(event: str, data: object) -> None:
+        """
+        Callback function, sends tansformed data back.
+        """
+        message = Message(event=event, data=data)
+        await context.send_json(message.json())
+
+    return callback
+
+
+def create_caller(db: Session, context: WebSocket):
+    """
+    Creates message caller for websocket route.
+    """
+    callback = create_callback(context)
+    
+    async def caller(event: str, data=None):
+        """
+        Caller function, allows of easy websocket event handling.
+        Invokes specific handler passing database session, player
+        connection and data object.
+        """
+        handler = handlers.get(event)
+        player = context.state.player
+        if handler:
+            return await handler(db, PlayerConnection(player, callback), data)
+        else:
+            print(f"[Warning] Calling \"{event}\" handler failed.")
+
+    return caller
+
+
+async def websocket_route(context: WebSocket, db: Session = Depends(get_db)):
     await context.accept()
-    connect_handler = handlers.get('connect')
-    if connect_handler:
-        await connect_handler(context, token)
+    caller = create_caller(db, context)
+    await caller('connect')
     try:
         while True:
             payload = await context.receive_json()
             message = Message(**payload)
-            handler = handlers.get(message.event)
-            await handler(context, message.data)
+            await caller(message.event, message.data)
     except WebSocketDisconnect:
-        disconnect_handler = handlers.get('disconnect')
-        if disconnect_handler:
-            await disconnect_handler(context)
+        await caller('disconnect')
 
 
 def register_events(callbacks):
+    """
+    Registers supported events.
+    """
     for callback in callbacks:
         handlers[callback.__name__] = callback
 
