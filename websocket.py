@@ -5,6 +5,7 @@ import schemas
 from entities import PlayerConnection
 from humps import camelize
 import typing
+import json
 
 handlers = {}
 
@@ -65,9 +66,12 @@ async def websocket_route(context: WebSocket, db: Session = Depends(get_db)):
     await caller('connect')
     try:
         while True:
-            payload = await context.receive_json()
-            message = schemas.Message(**payload)
-            await caller(message.event, message.data)
+            try:
+                payload = await context.receive_json()
+                message = schemas.Message(**payload)
+                await caller(message.event, message.data)
+            except json.decoder.JSONDecodeError:
+                pass
     except WebSocketDisconnect:
         await caller('disconnect')
 
