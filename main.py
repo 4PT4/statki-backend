@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from schemas import PlayerBase, Credentials, Token
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
-from auth import get_password_hash, verify_password, create_token, WebSocketAuthBackend
+from auth import verify_password, create_token, WebSocketAuthBackend
+from crud import create_player
 from entities import PlayerConnection
 
 Base.metadata.create_all(bind=engine)
@@ -32,21 +33,6 @@ def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
     return players
 
 
-def create_player(db: Session, credentials: Credentials):
-    """
-    Creates new player.
-    """
-    player = Player(
-        nickname=credentials.nickname,
-        password=get_password_hash(credentials.password)
-    )
-    db.add(player)
-    db.commit()
-    db.refresh(player)
-
-    return player.id
-
-
 @app.post("/auth/login", response_model=Token)
 def login(credentials: Credentials, db: Session = Depends(get_db)):
     query = db.query(Player)
@@ -65,7 +51,6 @@ def login(credentials: Credentials, db: Session = Depends(get_db)):
             )
     else:
         player_id = create_player(db, credentials)
-        # TODO: Populate warships from predefined set.
 
     return Token(token=create_token(player_id))
 
