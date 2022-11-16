@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 from humps import camelize
+from typing import List
 
 
 class Message(BaseModel):
@@ -44,4 +45,4 @@ class WarshipBase(BaseModel):
 
 
 class PlayerInternal(PlayerBase):
-    warships: list[WarshipBase]
+    warships: List[WarshipBase]

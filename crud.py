@@ -3,7 +3,7 @@ import schemas
 import models
 import auth
 import models
-
+import predefined_data
 
 def create_player(db: Session, credentials: schemas.Credentials) -> str:
     """
@@ -12,7 +12,7 @@ def create_player(db: Session, credentials: schemas.Credentials) -> str:
     player = models.Player(
         nickname=credentials.nickname,
         password=auth.get_password_hash(credentials.password),
-        # warships=predefined_warships
+        warships=next(predefined_data.warship_pool)
     )
     db.add(player)
     db.commit()

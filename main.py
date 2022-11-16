@@ -10,6 +10,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import verify_password, create_token, WebSocketAuthBackend
 from crud import create_player
 from entities import PlayerConnection
+from typing import List
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,7 +24,7 @@ middleware = [
 app: FastAPI = FastAPI(middleware=middleware)
 
 
-@app.get("/players", response_model=list[PlayerBase])
+@app.get("/players", response_model=List[PlayerBase])
 def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
     query = db.query(Player)
     query = query.filter(Player.last_seen >= seen_after)
