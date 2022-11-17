@@ -1,8 +1,7 @@
-from enum import Enum
 from pydantic import BaseModel, Field
 from humps import camelize
 from typing import List
-
+import models
 
 class Message(BaseModel):
     event: str
@@ -16,6 +15,11 @@ class Token(BaseModel):
 class Credentials(BaseModel):
     nickname: str
     password: str
+
+
+class ShootMessage(BaseModel):
+    x: int
+    y: int
 
 
 class PlayerBase(BaseModel):
@@ -34,14 +38,18 @@ class PlayerBase(BaseModel):
 
 class WarshipBase(BaseModel):
     id: str
-    player_id: str
+    player_id: str | None
     length:  int
     x: int
     y: int
-    orientation: Enum
+    orientation: models.Orientation
 
     class Config:
         orm_mode = True
+
+
+class ReadyMessage(BaseModel):
+    warships: List[WarshipBase]
 
 
 class PlayerInternal(PlayerBase):

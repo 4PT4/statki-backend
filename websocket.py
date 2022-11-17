@@ -19,9 +19,16 @@ def create_callback(context: WebSocket):
         Callback function, sends tansformed data back.
         """
         message = schemas.Message(event=event, data=data)
-        await context.send_json(message.json())
+        try:
+            await context.send_json(message.json())
+        except Exception:
+            pass
 
     return callback
+
+
+# Active connections
+connections: list[PlayerConnection] = []
 
 
 def create_caller(db: Session, context: WebSocket):
@@ -38,7 +45,7 @@ def create_caller(db: Session, context: WebSocket):
         if not handler:
             print(f"[Warning] No handler named \"{event}\" was registered.")
             return
-        
+
         types = typing.get_type_hints(handler)
         try:
             DataType = types['data']
@@ -49,13 +56,22 @@ def create_caller(db: Session, context: WebSocket):
         except KeyError:
             pass
         except TypeError:
-            print(f"[Warning] Incorrect type was specified in \"{event}\" handler. Unable to deserialize.")
+            print(
+                f"[Warning] Incorrect type was specified in \"{event}\" handler. Unable to deserialize.")
 
         player = context.state.player
-        callback = create_callback(context)
-        player_connection = PlayerConnection(player, callback)
+    
+        player_connection = None
+        for conn in connections:
+            if conn.player == player:
+                player_connection = conn
 
-        return await handler(db, player_connection, data)
+        if not player_connection:
+            callback = create_callback(context)
+            player_connection = PlayerConnection(db, player, callback)
+            connections.append(player_connection)
+
+        return await handler(player_connection, data)
 
     return caller
 
@@ -73,7 +89,8 @@ async def websocket_route(context: WebSocket, db: Session = Depends(get_db)):
             except json.decoder.JSONDecodeError:
                 pass
     except WebSocketDisconnect:
-        await caller('disconnect')
+        pass
+        # caller('disconnect')
 
 
 def register_events(callbacks):
