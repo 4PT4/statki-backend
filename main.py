@@ -10,7 +10,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import verify_password, create_token, WebSocketAuthBackend
 from crud import create_player
 from entities import PlayerConnection
-from typing import List
+import typing
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,7 +24,7 @@ middleware = [
 app: FastAPI = FastAPI(middleware=middleware)
 
 
-@app.get("/players", response_model=List[PlayerBase])
+@app.get("/players", response_model=typing.List[PlayerBase])
 def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
     query = db.query(Player)
     query = query.filter(Player.last_seen >= seen_after)
@@ -65,19 +65,76 @@ websocket_middleware = [
 app_websocket: FastAPI = FastAPI(
     middleware=websocket_middleware)
 
+class GameQueue:
+    def __init__(self) -> None:
+        self.queue = []
+
+    def enqueue(self, conn):
+        # conn.player.id
+        # ..nickname
+        self.queue.append(conn)
+        if len(self.queue) > 1:
+            # wyciagnac dwoch ostatnich graczy z kolejki
+            # stworzyc nowa sesje z tych dwoch graczy
+            # session.start()
+            pass
+
+class GameSession:
+    def __init__(self, player_a: PlayerConnection, player_b: PlayerConnection) -> None:
+        self.player_a = player_a
+        self.player_b = player_b
+        # zapisywac kto w tym momencie ma ruch
+
+        pass
+
+    def start(self):
+        # wyslac do obydwu uzytkownikow ten sam komunikat:
+        # { "status": "GAME_STARTED" }
+        pass
+
+    def shoot(self, x, y):
+        # czy jakikolwiek statek przeciwnika lezy w x, y
+        # wyslac do uzytkownika który strzelil callback ze trafil
+        # lub nie trafil
+        # sprawidzic czy to byl ostatni statek na planszy
+        # jesli tak uzytkownik.send({"status": "WIN"})
+        # uzytkownik.wins + 1
+        # i wtedy przciwnik.send({"status": "LOSE"})
+        # przeciwnik.lose + 1
+        # (a do przeciwnika czy dostal)
+        pass
+
+
+game_queue = GameQueue()
+
 
 async def connect(db: Session, conn: PlayerConnection, data):
-    await conn.callback("greeting", "hi")
+    await conn.callback("init", conn.player.warships)
 
 
 async def disconnect(db: Session, conn: PlayerConnection, data):
+    # znowu szukac czy uzytkownik jest w sesji
+    # jesli jest w sesji to przeciwikowi odsylamy komunikat
+    # { "status": "ENEMY_DISCONNECTED" }
     pass
 
+async def shoot(db: Session, conn: PlayerConnection, data):
+    # data zawiera to: { x: 0, y: 2 }
+    # sprawdzic czy uzytkownik jest w tym momencie w sesji gry
+    # jesli tak sprwaidzic czy teraz jego ruch
+    # strzeclic w pole przciwnika
+    # session.shoot(x, y)
+    pass
+
+async def ready(db: Session, conn: PlayerConnection, data):
+    game_queue.enqueue(conn)
+    print(game_queue.queue)
+    
 
 app_websocket.add_api_websocket_route('/', websocket.register_events([
     connect,
     disconnect,
-    # TODO: ready
+    ready
     # TODO: shoot
 ]))
 
