@@ -34,7 +34,7 @@ class GameSession:
 
                 if _x == x and _y == y:
                     enemy.ships_left -= 1
-                    return True, True
+                    return True, enemy.ships_left == 0
 
         self.now_moves = enemy
         return False, False
