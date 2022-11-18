@@ -1,10 +1,10 @@
-from enum import Enum
 from pydantic import BaseModel, Field
 from humps import camelize
 from typing import List
+import models
 
 
-class Message(BaseModel):
+class WebSocketMessage(BaseModel):
     event: str
     data: object
 
@@ -23,7 +23,6 @@ class PlayerBase(BaseModel):
     nickname: str
     wins: int
     loses: int
-    win_streak: int = Field(alias="winStreak")
     last_seen: int = Field(alias="lastSeen")
 
     class Config:
@@ -34,14 +33,23 @@ class PlayerBase(BaseModel):
 
 class WarshipBase(BaseModel):
     id: str
-    player_id: str
+    player_id: str | None
     length:  int
     x: int
     y: int
-    orientation: Enum
+    orientation: models.Orientation
 
     class Config:
         orm_mode = True
+
+
+class ReadyMessage(BaseModel):
+    warships: List[WarshipBase]
+
+
+class ShootMessage(BaseModel):
+    x: int
+    y: int
 
 
 class PlayerInternal(PlayerBase):

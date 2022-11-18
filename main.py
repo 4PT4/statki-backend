@@ -4,13 +4,15 @@ from fastapi.middleware import Middleware
 from database import engine, Base, get_db
 from models import Player
 from sqlalchemy.orm import Session
-from schemas import PlayerBase, Credentials, Token
+from schemas import PlayerBase, Credentials, Token, ShootMessage, ReadyMessage
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from auth import verify_password, create_token, WebSocketAuthBackend
 from crud import create_player
 from entities import PlayerConnection
-from typing import List
+import typing
+from game import Game, GameExitCode
+from utils import create_player_payload, create_init_payload
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,7 +26,7 @@ middleware = [
 app: FastAPI = FastAPI(middleware=middleware)
 
 
-@app.get("/players", response_model=List[PlayerBase])
+@app.get("/players", response_model=typing.List[PlayerBase])
 def get_players(seen_after: int = 0, db: Session = Depends(get_db)):
     query = db.query(Player)
     query = query.filter(Player.last_seen >= seen_after)
@@ -66,19 +68,60 @@ app_websocket: FastAPI = FastAPI(
     middleware=websocket_middleware)
 
 
-async def connect(db: Session, conn: PlayerConnection, data):
-    await conn.callback("greeting", "hi")
+game = Game()
 
 
-async def disconnect(db: Session, conn: PlayerConnection, data):
-    pass
+async def connect(conn: PlayerConnection, data):
+    payload = create_init_payload(conn.get_player())
+    await conn.callback("init", payload)
+
+
+async def disconnect(conn: PlayerConnection, data):
+    conn.increment_loses()
+    game.dequeue(conn)
+    enemy = game.stop_current_session(conn)
+    if enemy:
+        await enemy.callback("stop", {"code": GameExitCode.ENEMY_DISCONNECTED})
+
+
+async def shoot(conn: PlayerConnection, data: ShootMessage):
+    game_session = game.get_player_session(conn)
+    if not (game_session and game_session.now_moves == conn):
+        return
+
+    did_hit, game_over = game_session.shoot(data.x, data.y)
+    await conn.callback("shoot", {"hit": did_hit})
+    enemy = game_session.get_enemy(conn)
+    await enemy.callback("hit", {"wasHit": did_hit, "field": {"x": data.x, "y": data.y}})
+    if not game_over:
+        return
+
+    game.game_sessions.remove(game_session)
+    conn.increment_wins()
+    enemy = game_session.get_enemy(conn)
+    enemy.increment_loses()
+    del game_session
+    await conn.callback("stop", {"code": GameExitCode.WIN})
+    await enemy.callback("stop", {"code": GameExitCode.LOSE})
+
+
+async def ready(conn: PlayerConnection, data: ReadyMessage):
+    conn.update_warships(data.warships)
+    game_session = game.enqueue(conn)
+    if not game_session:
+        return
+
+    ally = game_session.now_moves
+    enemy = game_session.get_enemy(ally)
+    await ally.callback("start", create_player_payload(enemy.get_player()))
+    await enemy.callback("start", create_player_payload(ally.get_player()))
 
 
 app_websocket.add_api_websocket_route('/', websocket.register_events([
     connect,
     disconnect,
-    # TODO: ready
-    # TODO: shoot
+    ready,
+    shoot
 ]))
 
 
