@@ -91,8 +91,8 @@ async def shoot(conn: PlayerConnection, data: ShootMessage):
 
     did_hit, game_over = game_session.shoot(data.x, data.y)
     await conn.callback("shoot", {"hit": did_hit})
-    game_session.get_enemy(conn)
-    await conn.callback("hit", {"wasHit": did_hit, "field": {"x": data.x, "y": data.y}})
+    enemy = game_session.get_enemy(conn)
+    await enemy.callback("hit", {"wasHit": did_hit, "field": {"x": data.x, "y": data.y}})
     if not game_over:
         return
 
