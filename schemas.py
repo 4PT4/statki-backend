@@ -3,7 +3,8 @@ from humps import camelize
 from typing import List
 import models
 
-class Message(BaseModel):
+
+class WebSocketMessage(BaseModel):
     event: str
     data: object
 
@@ -15,11 +16,6 @@ class Token(BaseModel):
 class Credentials(BaseModel):
     nickname: str
     password: str
-
-
-class ShootMessage(BaseModel):
-    x: int
-    y: int
 
 
 class PlayerBase(BaseModel):
@@ -50,6 +46,11 @@ class WarshipBase(BaseModel):
 
 class ReadyMessage(BaseModel):
     warships: List[WarshipBase]
+
+
+class ShootMessage(BaseModel):
+    x: int
+    y: int
 
 
 class PlayerInternal(PlayerBase):

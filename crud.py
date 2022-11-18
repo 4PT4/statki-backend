@@ -21,7 +21,7 @@ def create_player(db: Session, credentials: schemas.Credentials) -> str:
     return player.id
 
 
-def get_player(db: Session, id: int) -> models.Player:
+def get_player(db: Session, id: int) -> schemas.PlayerInternal:
     """
     Gets player by id.
     """

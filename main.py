@@ -12,6 +12,7 @@ from crud import create_player
 from entities import PlayerConnection
 import typing
 from game import Game, GameSession
+from utils import create_player_payload, create_init_payload
 
 Base.metadata.create_all(bind=engine)
 
@@ -69,8 +70,10 @@ app_websocket: FastAPI = FastAPI(
 
 game = Game()
 
+
 async def connect(conn: PlayerConnection, data):
-    await conn.callback("init", {"warships": conn.player.warships})
+    payload = create_init_payload(conn.player)
+    await conn.callback("init", payload)
 
 
 def disconnect(conn: PlayerConnection, data):
@@ -81,21 +84,24 @@ def disconnect(conn: PlayerConnection, data):
 
 
 async def shoot(conn: PlayerConnection, data: ShootMessage):
-    game_session = game.get_player_session(conn)
+    game_session = game.get_session_if_turn(conn)
     if game_session:
         did_hit = game_session.shoot(data.x, data.y)
         await conn.callback("shoot", {"hit": did_hit})
 
 
 async def ready(conn: PlayerConnection, data: ReadyMessage):
-    # update statków gracza jesli ułożenie się zmieniło
-    # print(data.warships)
+    # conn.update_warships(data.warships)
     game_session: GameSession = game.enqueue(conn)
-    if game_session:
-        ally = game_session.now_moves
-        enemy = game_session.get_enemy()
-        await ally.callback("start", {"nickname": enemy.player.nickname})
-        await enemy.callback("start", {"nickname": ally.player.nickname})
+    if not game_session:
+        return
+
+    ally = game_session.now_moves
+    enemy = game_session.get_enemy()
+    ally_payload = create_player_payload(ally.player)
+    enemy_payload = create_player_payload(enemy.player)
+    await ally.callback("start", enemy_payload)
+    await enemy.callback("start", ally_payload)
 
 
 app_websocket.add_api_websocket_route('/', websocket.register_events([

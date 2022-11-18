@@ -1,5 +1,6 @@
 from schemas import PlayerInternal
 from sqlalchemy.orm import Session
+from models import Player
 
 
 class PlayerConnection:
@@ -13,5 +14,9 @@ class PlayerConnection:
         self.player: PlayerInternal = player
         self.callback = callback
 
-    def update_warships():
-        pass
+    def update_warships(self):
+        query = self.__db.query(Player)
+        query = query.filter_by()
+
+        warships = []
+        self.player.warships = warships

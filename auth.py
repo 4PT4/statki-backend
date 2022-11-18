@@ -56,7 +56,7 @@ def decode_token(token: str) -> str:
         raise AuthenticationError()
 
 
-async def get_current_player(token: str) -> PlayerInternal:
+def get_current_player(token: str) -> PlayerInternal:
     """
     Finds currently authenticated player.
     """
@@ -79,5 +79,5 @@ class WebSocketAuthBackend(AuthenticationBackend):
         if not token:
             raise AuthenticationError()
 
-        player = await get_current_player(token)
+        player = get_current_player(token)
         conn.state.player = player

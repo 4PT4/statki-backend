@@ -1,13 +1,10 @@
 from fastapi import WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-import schemas
+from schemas import WebSocketMessage, BaseModel
 from entities import PlayerConnection
 from humps import camelize
 import typing
-import json
-
-handlers = {}
 
 
 def create_callback(context: WebSocket):
@@ -18,20 +15,16 @@ def create_callback(context: WebSocket):
         """
         Callback function, sends tansformed data back.
         """
-        message = schemas.Message(event=event, data=data)
-        try:
-            await context.send_json(message.json())
-        except Exception:
-            pass
+        message = WebSocketMessage(event=event, data=data)
+        await context.send_json(message.json())
 
     return callback
 
 
-# Active connections
-connections: list[PlayerConnection] = []
+handlers = {}
 
 
-def create_caller(db: Session, context: WebSocket):
+def create_caller(player: PlayerConnection):
     """
     Creates message caller for websocket route.
     """
@@ -49,7 +42,7 @@ def create_caller(db: Session, context: WebSocket):
         types = typing.get_type_hints(handler)
         try:
             DataType = types['data']
-            if not issubclass(DataType, schemas.BaseModel):
+            if not issubclass(DataType, BaseModel):
                 raise TypeError
 
             data = DataType(**data)
@@ -59,38 +52,29 @@ def create_caller(db: Session, context: WebSocket):
             print(
                 f"[Warning] Incorrect type was specified in \"{event}\" handler. Unable to deserialize.")
 
-        player = context.state.player
-    
-        player_connection = None
-        for conn in connections:
-            if conn.player == player:
-                player_connection = conn
-
-        if not player_connection:
-            callback = create_callback(context)
-            player_connection = PlayerConnection(db, player, callback)
-            connections.append(player_connection)
-
-        return await handler(player_connection, data)
+        return await handler(player, data)
 
     return caller
 
 
 async def websocket_route(context: WebSocket, db: Session = Depends(get_db)):
+    player = context.state.player
+    callback = create_callback(context)
+    connection = PlayerConnection(db, player, callback)
+    caller = create_caller(connection)
     await context.accept()
-    caller = create_caller(db, context)
     await caller('connect')
     try:
         while True:
             try:
-                payload = await context.receive_json()
-                message = schemas.Message(**payload)
+                json = await context.receive_json()
+                message = WebSocketMessage(**json)
                 await caller(message.event, message.data)
             except json.decoder.JSONDecodeError:
                 pass
     except WebSocketDisconnect:
+        # await caller('disconnect')
         pass
-        # caller('disconnect')
 
 
 def register_events(callbacks):
