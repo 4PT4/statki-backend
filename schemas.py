@@ -23,7 +23,6 @@ class PlayerBase(BaseModel):
     nickname: str
     wins: int
     loses: int
-    win_streak: int = Field(alias="winStreak")
     last_seen: int = Field(alias="lastSeen")
 
     class Config:

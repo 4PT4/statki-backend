@@ -40,6 +40,7 @@ class PlayerConnection:
     def update(self):
         self.__db.add(self.p)
         self.__db.commit()
+        self.__db.refresh(self.p)
 
     def update_warships(self, warships: List[WarshipBase]):
         query = self.__db.query(Player)
