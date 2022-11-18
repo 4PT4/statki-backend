@@ -11,7 +11,7 @@ from auth import verify_password, create_token, WebSocketAuthBackend
 from crud import create_player
 from entities import PlayerConnection
 import typing
-from game import Game, GameSession, GameExitCode
+from game import Game, GameExitCode
 from utils import create_player_payload, create_init_payload
 
 Base.metadata.create_all(bind=engine)
