@@ -20,21 +20,26 @@ class PlayerConnection:
 
         self.ships_left = total_ships
 
-        # query = db.query(Player)
-        # query = query.filter(Player.id == player.id)
-        # player: Player = query.first()
-        # player = player
-        # player.wins += 1
+        query = db.query(Player)
+        query = query.filter(Player.id == player.id)
+        p = query.first()
+        self.p: Player = p
 
+        
         self.player: PlayerInternal = player
         self.callback = callback
 
     def increment_win(self):
-
-        pass
+        self.p.wins = Player.wins + 1
+        self.update()
 
     def increment_lose(self):
-        pass
+        self.p.loses = Player.loses + 1
+        self.update()
+
+    def update(self):
+        self.__db.add(self.p)
+        self.__db.commit()
 
     def update_warships(self, warships: List[WarshipBase]):
         query = self.__db.query(Player)

@@ -106,7 +106,7 @@ async def shoot(conn: PlayerConnection, data: ShootMessage):
 
 
 async def ready(conn: PlayerConnection, data: ReadyMessage):
-    # conn.update_warships(data.warships)
+    conn.update_warships(data.warships)
     game_session: GameSession = game.enqueue(conn)
     if not game_session:
         return

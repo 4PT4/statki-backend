@@ -15,8 +15,6 @@ class GameSession:
     def __init__(self, conn_a: PlayerConnection, conn_b: PlayerConnection) -> None:
         self.conn_a = conn_a
         self.conn_b = conn_b
-        # board_a
-        # board_b
         self.now_moves: PlayerConnection = self.conn_a
 
     def shoot(self, x: int, y: int):
@@ -36,7 +34,7 @@ class GameSession:
 
                 if _x == x and _y == y:
                     enemy.ships_left -= 1
-                    return True, enemy.ships_left == 0
+                    return True, True
 
         self.now_moves = enemy
         return False, False
