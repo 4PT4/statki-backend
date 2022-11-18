@@ -15,10 +15,11 @@ class PlayerConnection:
         self.player: PlayerInternal = player
         self.callback = callback
 
-    def add_win(self):
+    def increment_win(self):
+
         pass
 
-    def add_lose(self):
+    def increment_lose(self):
         pass
 
     def update_warships(self, warships: List[WarshipBase]):

@@ -77,6 +77,7 @@ async def connect(conn: PlayerConnection, data):
 
 
 async def disconnect(conn: PlayerConnection, data):
+    conn.increment_lose()
     game.dequeue(conn)
     enemy = game.stop_current_session(conn)
     if enemy:
@@ -94,9 +95,9 @@ async def shoot(conn: PlayerConnection, data: ShootMessage):
         return
 
     game.game_sessions.remove(game_session)
-    conn.add_win()
+    conn.increment_win()
     enemy = game_session.get_enemy(conn)
-    enemy.add_lose()
+    enemy.increment_lose()
     del game_session
     await conn.callback("stop", {"code": GameExitCode.WIN})
     await enemy.callback("stop", {"code": GameExitCode.LOSE})

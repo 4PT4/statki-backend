@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models import Orientation
 from enum import Enum
 
+
 class GameExitCode(Enum):
     UNKNOWN = 0
     WIN = 1
@@ -99,10 +100,3 @@ class Game:
         for session in self.game_sessions:
             if session.now_moves == conn:
                 return session
-
-
-# sprawidzic czy to byl ostatni statek na planszy
-# jesli tak uzytkownik.send({"status": "WIN"})
-# uzytkownik.wins + 1
-# i wtedy przciwnik.send({"status": "LOSE"})
-# przeciwnik.lose + 1
