@@ -11,8 +11,11 @@ class PlayerConnection:
     Has database access.
     """
 
-    def __init__(self, db: Session, player: PlayerInternal, callback) -> None:
+    def __init__(self, db: Session, player: Player, callback) -> None:
         self.__db = db
+        self.__player = player
+        self.callback = callback
+        db.add(player)
 
         total_ships = 0
         for warship in player.warships:
@@ -20,30 +23,24 @@ class PlayerConnection:
 
         self.ships_left = total_ships
 
-        query = db.query(Player)
-        query = query.filter(Player.id == player.id)
-        p = query.first()
-        self.p: Player = p
+    def get_player(self) -> PlayerInternal:
+        return PlayerInternal(**self.__player.__dict__)
 
-        
-        self.player: PlayerInternal = player
-        self.callback = callback
-
-    def increment_win(self):
-        self.p.wins = Player.wins + 1
+    def increment_wins(self) -> None:
+        self.__player.wins = Player.wins + 1
         self.update()
 
-    def increment_lose(self):
-        self.p.loses = Player.loses + 1
+    def increment_loses(self) -> None:
+        self.__player.loses = Player.loses + 1
         self.update()
 
-    def update(self):
-        self.__db.add(self.p)
+    def update(self) -> None:
+        self.__db.add(self.__player)
         self.__db.commit()
-        self.__db.refresh(self.p)
+        self.__db.refresh(self.__player)
 
-    def update_warships(self, warships: List[WarshipBase]):
-        query = self.__db.query(Player)
-        query = query.filter_by()
-
-        self.player.warships = warships
+    def update_warships(self, warships: List[WarshipBase]) -> None:
+        # self.p.warships.
+        #self.p.warships = [Warship(**warship.dict()) for warship in warships]
+        # self.update()
+        pass

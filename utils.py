@@ -23,6 +23,7 @@ def create_player_payload(player):
     win_rate = 0
     try:
         win_rate = player.wins / (player.wins + player.loses) * 100
+        win_rate = round(win_rate)
     except ZeroDivisionError:
         pass
 

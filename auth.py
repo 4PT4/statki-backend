@@ -2,9 +2,9 @@ from passlib.context import CryptContext
 import jwt
 from datetime import timezone, datetime, timedelta
 from starlette.authentication import AuthenticationBackend, AuthenticationError
-from schemas import PlayerInternal
 from crud import get_player
 from database import get_db
+from models import Player
 
 SECRET_KEY = "f170e0d954edfcfb3e63759e934fd220580ab333b58c6d14f3762a02423c198f"
 ALGORITHM = "HS256"
@@ -50,22 +50,22 @@ def decode_token(token: str) -> str:
     try:
         decoded = jwt.decode(token, SECRET_KEY, [ALGORITHM])
         id = decoded["sub"]
-        
+
         return id
     except jwt.PyJWTError:
         raise AuthenticationError()
 
 
-def get_current_player(token: str) -> PlayerInternal:
+def get_current_player(token: str) -> Player | None:
     """
     Finds currently authenticated player.
     """
     player_id: str = decode_token(token)
     with next(get_db()) as db:
-        player: PlayerInternal = get_player(db, player_id)
+        player = get_player(db, player_id)
         if player:
             return player
-        
+
         raise AuthenticationError()
 
 

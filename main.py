@@ -72,12 +72,12 @@ game = Game()
 
 
 async def connect(conn: PlayerConnection, data):
-    payload = create_init_payload(conn.player)
+    payload = create_init_payload(conn.get_player())
     await conn.callback("init", payload)
 
 
 async def disconnect(conn: PlayerConnection, data):
-    conn.increment_lose()
+    conn.increment_loses()
     game.dequeue(conn)
     enemy = game.stop_current_session(conn)
     if enemy:
@@ -97,9 +97,9 @@ async def shoot(conn: PlayerConnection, data: ShootMessage):
         return
 
     game.game_sessions.remove(game_session)
-    conn.increment_win()
+    conn.increment_wins()
     enemy = game_session.get_enemy(conn)
-    enemy.increment_lose()
+    enemy.increment_loses()
     del game_session
     await conn.callback("stop", {"code": GameExitCode.WIN})
     await enemy.callback("stop", {"code": GameExitCode.LOSE})
@@ -107,14 +107,14 @@ async def shoot(conn: PlayerConnection, data: ShootMessage):
 
 async def ready(conn: PlayerConnection, data: ReadyMessage):
     conn.update_warships(data.warships)
-    game_session: GameSession = game.enqueue(conn)
+    game_session = game.enqueue(conn)
     if not game_session:
         return
 
     ally = game_session.now_moves
     enemy = game_session.get_enemy(ally)
-    await ally.callback("start", create_player_payload(enemy.player))
-    await enemy.callback("start", create_player_payload(ally.player))
+    await ally.callback("start", create_player_payload(enemy.get_player()))
+    await enemy.callback("start", create_player_payload(ally.get_player()))
 
 
 app_websocket.add_api_websocket_route('/', websocket.register_events([

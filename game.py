@@ -22,7 +22,7 @@ class GameSession:
         Shoots enemy warship.
         """
         enemy = self.get_enemy(self.now_moves)
-        for warship in enemy.player.warships:
+        for warship in enemy.get_player().warships:
             for i in range(warship.length):
                 _x = warship.x
                 _y = warship.y
@@ -58,7 +58,7 @@ class Game:
         self.queue: list[PlayerConnection] = []
         self.game_sessions: list[GameSession] = []
 
-    def enqueue(self, conn: PlayerConnection) -> Session | None:
+    def enqueue(self, conn: PlayerConnection) -> GameSession | None:
         """
         Enqueues player.
         """
