@@ -11,7 +11,7 @@ from auth import verify_password, create_token, WebSocketAuthBackend
 from crud import create_player
 from entities import PlayerConnection
 import typing
-from game import Game, GameSession
+from game import Game, GameSession, GameExitCode
 from utils import create_player_payload, create_init_payload
 
 Base.metadata.create_all(bind=engine)
@@ -76,18 +76,30 @@ async def connect(conn: PlayerConnection, data):
     await conn.callback("init", payload)
 
 
-def disconnect(conn: PlayerConnection, data):
-    # szukac czy uzytkownik jest w sesji
-    # jesli jest w sesji to przeciwikowi odsylamy komunikat
-    # { "status": "ENEMY_DISCONNECTED" }
+async def disconnect(conn: PlayerConnection, data):
     game.dequeue(conn)
+    enemy = game.stop_current_session(conn)
+    if enemy:
+        await enemy.callback("stop", {"code": GameExitCode.ENEMY_DISCONNECTED})
 
 
 async def shoot(conn: PlayerConnection, data: ShootMessage):
-    game_session = game.get_session_if_turn(conn)
-    if game_session:
-        did_hit = game_session.shoot(data.x, data.y)
-        await conn.callback("shoot", {"hit": did_hit})
+    game_session = game.get_player_session(conn)
+    if not (game_session and game_session.now_moves == conn):
+        return
+
+    did_hit, finished = game_session.shoot(data.x, data.y)
+    await conn.callback("shoot", {"hit": did_hit})
+    if not finished:
+        return
+
+    game.game_sessions.remove(game_session)
+    conn.add_win()
+    enemy = game_session.get_enemy(conn)
+    enemy.add_lose()
+    del game_session
+    await conn.callback("stop", {"code": GameExitCode.WIN})
+    await enemy.callback("stop", {"code": GameExitCode.LOSE})
 
 
 async def ready(conn: PlayerConnection, data: ReadyMessage):
@@ -97,11 +109,9 @@ async def ready(conn: PlayerConnection, data: ReadyMessage):
         return
 
     ally = game_session.now_moves
-    enemy = game_session.get_enemy()
-    ally_payload = create_player_payload(ally.player)
-    enemy_payload = create_player_payload(enemy.player)
-    await ally.callback("start", enemy_payload)
-    await enemy.callback("start", ally_payload)
+    enemy = game_session.get_enemy(ally)
+    await ally.callback("start", create_player_payload(enemy.player))
+    await enemy.callback("start", create_player_payload(ally.player))
 
 
 app_websocket.add_api_websocket_route('/', websocket.register_events([

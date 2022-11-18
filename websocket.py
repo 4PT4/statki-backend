@@ -5,7 +5,7 @@ from schemas import WebSocketMessage, BaseModel
 from entities import PlayerConnection
 from humps import camelize
 import typing
-
+import json
 
 def create_callback(context: WebSocket):
     """
@@ -67,14 +67,13 @@ async def websocket_route(context: WebSocket, db: Session = Depends(get_db)):
     try:
         while True:
             try:
-                json = await context.receive_json()
-                message = WebSocketMessage(**json)
+                data = await context.receive_json()
+                message = WebSocketMessage(**data)
                 await caller(message.event, message.data)
             except json.decoder.JSONDecodeError:
                 pass
     except WebSocketDisconnect:
-        # await caller('disconnect')
-        pass
+        await caller('disconnect')
 
 
 def register_events(callbacks):
