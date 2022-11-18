@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models import Player
 from typing import List
 
+
 class PlayerConnection:
     """
     Player data structure for websocket connections,
@@ -12,6 +13,19 @@ class PlayerConnection:
 
     def __init__(self, db: Session, player: PlayerInternal, callback) -> None:
         self.__db = db
+
+        total_ships = 0
+        for warship in player.warships:
+            total_ships += warship.length
+
+        self.ships_left = total_ships
+
+        # query = db.query(Player)
+        # query = query.filter(Player.id == player.id)
+        # player: Player = query.first()
+        # player = player
+        # player.wins += 1
+
         self.player: PlayerInternal = player
         self.callback = callback
 

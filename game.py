@@ -35,8 +35,8 @@ class GameSession:
                     _y += i
 
                 if _x == x and _y == y:
-                    #            sprawdzac czy to ostatni statek na planszy
-                    return True, True
+                    enemy.ships_left -= 1
+                    return True, enemy.ships_left == 0
 
         self.now_moves = enemy
         return False, False
