@@ -17,12 +17,6 @@ class PlayerConnection:
         self.callback = callback
         db.add(player)
 
-        total_ships = 0
-        for warship in player.warships:
-            total_ships += warship.length
-
-        self.ships_left = total_ships
-
     def get_player(self) -> PlayerInternal:
         return PlayerInternal(**self.__player.__dict__)
 
@@ -40,9 +34,11 @@ class PlayerConnection:
         self.__db.refresh(self.__player)
 
     def update_warships(self, warships: List[WarshipBase]) -> None:
+        self.ships_left = 0
         for warship in warships:
             query = self.__db.query(Warship)
             query = query.filter(Warship.id == warship.id)
             query.update(warship.dict())
+            self.ships_left += warship.length
 
         self.update()
