@@ -1,6 +1,6 @@
 from schemas import PlayerInternal, WarshipBase
 from sqlalchemy.orm import Session
-from models import Player
+from models import Player, Warship
 from typing import List
 
 
@@ -40,7 +40,9 @@ class PlayerConnection:
         self.__db.refresh(self.__player)
 
     def update_warships(self, warships: List[WarshipBase]) -> None:
-        # self.p.warships.
-        #self.p.warships = [Warship(**warship.dict()) for warship in warships]
-        # self.update()
-        pass
+        for warship in warships:
+            query = self.__db.query(Warship)
+            query = query.filter(Warship.id == warship.id)
+            query.update(warship.dict())
+
+        self.update()

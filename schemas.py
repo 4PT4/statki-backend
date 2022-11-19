@@ -33,7 +33,6 @@ class PlayerBase(BaseModel):
 
 class WarshipBase(BaseModel):
     id: str
-    player_id: str | None
     length:  int
     x: int
     y: int
